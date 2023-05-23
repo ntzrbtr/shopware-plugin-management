@@ -67,3 +67,18 @@ The command will install all plugins in that file, activate them if `active` is 
 
 The command will afterwards uninstall all plugins that are installed in your Shopware installation, but are not in the
 `plugins.json` file.
+
+## Automation
+
+You can use the command in your CI/CD pipeline to automate the installation of plugins. To do so, you can add the
+command as a post-update script to your `composer.json` file:
+
+```json
+{
+  "scripts": {
+    "post-update-cmd": [
+      "@php bin/console netzarbeiter:plugin:manage plugins.json"
+    ]
+  }
+}
+```
