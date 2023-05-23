@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Netzarbeiter\Shopware\PluginManagement\Command;
 
+use Composer\IO\NullIO;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
@@ -74,6 +75,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
     {
         $this
             ->addArgument('plugin-list', InputArgument::REQUIRED, 'Plugin list file')
+            ->addOption('refresh', null, null, 'Refresh plugin list before handling plugins')
             ->addOption('dry-run', null, null, 'Dry run, do not install or activate plugins');
     }
 
@@ -102,6 +104,12 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
         // Validate plugin list.
         if (!$this->validatePluginList($pluginList)) {
             return self::FAILURE;
+        }
+
+        // Refresh plugin list if requested.
+        if ($input->getOption('refresh')) {
+            $this->io->section('Refreshing plugin list');
+            $this->pluginService->refreshPlugins($this->context, new NullIO());
         }
 
         // Handle plugins and print output.
