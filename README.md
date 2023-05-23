@@ -50,7 +50,7 @@ command as a post-update script to your `composer.json` file:
 {
   "scripts": {
     "post-update-cmd": [
-      "@php bin/console netzarbeiter:plugin:manage plugins.json"
+        "[ ! -f vendor/autoload.php ] || [ ! -f plugins.json ] || $PHP_BINARY bin/console netzarbeiter:plugins:handle --refresh plugins.json"
     ]
   }
 }
