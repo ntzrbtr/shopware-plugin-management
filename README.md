@@ -49,6 +49,16 @@ return [
 bin/console netzarbeiter:plugin:manage <file>
 ```
 
+### Options
+
+#### `--refresh`
+
+Refresh the plugin list before installing plugins.
+
+#### `--dry-run`
+
+Do not install or uninstall plugins, just show what would be done.
+
 ## `plugins.json`
 
 The command takes a JSON file with the following schema:
