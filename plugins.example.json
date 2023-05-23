@@ -1,0 +1,14 @@
+{
+    "PluginA": {
+        "active": true,
+        "update": true
+    },
+    "PluginB": {
+        "active": false,
+        "update": false
+    },
+    "PluginC": {
+        "active": true,
+        "update": "force"
+    }
+}
