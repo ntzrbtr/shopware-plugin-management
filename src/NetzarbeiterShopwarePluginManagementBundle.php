@@ -7,6 +7,6 @@ namespace Netzarbeiter\Shopware\PluginManagement;
 /**
  * Bundle class
  */
-class NetzarbeiterShopwarePluginManagementBundle extends \Symfony\Component\HttpKernel\Bundle\Bundle
+class NetzarbeiterShopwarePluginManagementBundle extends \Shopware\Core\Framework\Bundle
 {
 }
