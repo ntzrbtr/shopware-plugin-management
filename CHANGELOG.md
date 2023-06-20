@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.2.0
+
+- Switch to using Shopware bundle instead of Symfony bundle
+- Add logging
+
 ## v1.1.0
 
 - Add changelog.
