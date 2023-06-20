@@ -1,0 +1,24 @@
+<?xml version="1.0" ?>
+
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns:monolog="http://symfony.com/schema/dic/monolog"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd http://symfony.com/schema/dic/monolog http://symfony.com/schema/dic/monolog/monolog-1.0.xsd">
+
+    <monolog:config>
+        <!-- Define new channels -->
+        <monolog:channel>ntzrbtr_shopware_plugin_management</monolog:channel>
+
+        <!-- Define handlers for new channels -->
+        <monolog:handler
+            name="ntzrbtr_shopware_plugin_management"
+            type="rotating_file"
+            max-files="14"
+            path="%kernel.logs_dir%/ntzrbtr-shopware-plugin-management_%kernel.environment%.log"
+            level="debug">
+            <monolog:channels>
+                <monolog:channel>ntzrbtr_shopware_plugin_management</monolog:channel>
+            </monolog:channels>
+        </monolog:handler>
+    </monolog:config>
+</container>

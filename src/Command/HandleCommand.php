@@ -21,8 +21,10 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Install, activate, update, and remove plugins
  */
-class HandleCommand extends \Symfony\Component\Console\Command\Command
+class HandleCommand extends \Symfony\Component\Console\Command\Command implements \Psr\Log\LoggerAwareInterface
 {
+    use \Psr\Log\LoggerAwareTrait;
+
     /**
      * @inerhitDoc
      */
@@ -161,6 +163,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
         try {
             $plugin = $this->pluginService->getPluginByName($pluginName, $this->context);
         } catch (\Shopware\Core\Framework\Plugin\Exception\PluginNotFoundException $e) {
+            $this->logger->error('Plugin missing', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
             return ['Plugin missing'];
         }
 
@@ -173,6 +176,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
                 $dryRun || $this->pluginLifecycleService->installPlugin($plugin, $this->context);
                 $actions[] = 'Installed';
             } catch (\Exception $e) {
+                $this->logger->error('Installation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
                 return ['Installation failed'];
             }
         }
@@ -183,6 +187,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
                 $dryRun || $this->pluginLifecycleService->activatePlugin($plugin, $this->context);
                 $actions[] = 'Activated';
             } catch (\Exception $e) {
+                $this->logger->error('Activation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
                 $actions[] = 'Activation failed';
             }
         } elseif (!$settings->active && $plugin->getActive()) {
@@ -190,6 +195,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
                 $dryRun || $this->pluginLifecycleService->deactivatePlugin($plugin, $this->context);
                 $actions[] = 'Deactivated';
             } catch (\Exception $e) {
+                $this->logger->error('Deactivation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
                 $actions[] = 'Deactivation failed';
             }
         }
@@ -200,6 +206,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
                 $dryRun || $this->pluginLifecycleService->updatePlugin($plugin, $this->context);
                 $actions[] = 'Updated';
             } catch (\Exception $e) {
+                $this->logger->error('Update failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
                 $actions[] = 'Update failed';
             }
         }
@@ -263,15 +270,23 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
     /**
      * Load plugin list from file.
      *
-     * @param string $file
+     * @param string $pluginFile
      * @return \stdClass|null
      */
-    protected function loadPluginList(string $file): ?\stdClass
+    protected function loadPluginList(string $pluginFile): ?\stdClass
     {
+        // Check path for schema file.
+        if (!is_file($pluginFile)) {
+            $this->logger->error('Could not find schema file', ['file' => $pluginFile]);
+            $this->io->error(sprintf('Could not find plugin list file "%s"', $pluginFile));
+            return null;
+        }
+
         try {
-            $pluginList = json_decode(file_get_contents($file), false, 512, JSON_THROW_ON_ERROR);
+            $pluginList = json_decode(file_get_contents($pluginFile), false, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            $this->io->error(sprintf('Error parsing plugin list file "%s": %s', $file, $e->getMessage()));
+            $this->logger->error('Error parsing plugin list file', ['file' => $pluginFile, 'error' => $e->getMessage()]);
+            $this->io->error(sprintf('Error parsing plugin list file "%s": %s', $pluginFile, $e->getMessage()));
             return null;
         }
 
@@ -287,17 +302,19 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
     protected function validatePluginList(\stdClass $pluginList): bool
     {
         // Check path for schema file.
-        $file = realpath(__DIR__ . '/../../shopware.plugin-management.json');
-        if (!$file) {
-            $this->io->error('Could not find schema file');
+        $schemaFile = realpath(__DIR__ . '/../../shopware.plugin-management.json');
+        if (!$schemaFile || !is_file($schemaFile)) {
+            $this->logger->error('Could not find schema file', ['file' => __DIR__ . '/../../shopware.plugin-management.json']);
+            $this->io->error(sprintf('Could not find schema file "%s"', __DIR__ . '/../../shopware.plugin-management.json'));
             return false;
         }
 
         // Load schema file.
         try {
-            $json = json_decode(file_get_contents($file), false, 512, JSON_THROW_ON_ERROR);
+            $json = json_decode(file_get_contents($schemaFile), false, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
-            $this->io->error(sprintf('Error parsing schema file "%s": %s', $file, $e->getMessage()));
+            $this->logger->error('Error parsing schema file', ['file' => $schemaFile, 'error' => $e->getMessage()]);
+            $this->io->error(sprintf('Error parsing schema file "%s": %s', $schemaFile, $e->getMessage()));
             return false;
         }
 
@@ -305,6 +322,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
         try {
             $schema = \Swaggest\JsonSchema\Schema::import($json);
         } catch (\Exception $e) {
+            $this->logger->error('Error importing schema', ['file' => $schemaFile, 'error' => $e->getMessage()]);
             $this->io->error(sprintf('Error importing schema: %s', $e->getMessage()));
             return false;
         }
@@ -313,6 +331,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command
         try {
             $schema->in($pluginList);
         } catch (\Swaggest\JsonSchema\InvalidValue $e) {
+            $this->logger->error('Error validating plugin list', ['error' => $e->getMessage()]);
             $this->io->error(sprintf('Error validating plugin list: %s', $e->getMessage()));
             return false;
         }

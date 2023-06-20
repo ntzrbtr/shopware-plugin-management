@@ -2,13 +2,21 @@
 
 <container xmlns="http://symfony.com/schema/dic/services"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+           xmlns:monolog="http://symfony.com/schema/dic/monolog"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd http://symfony.com/schema/dic/monolog http://symfony.com/schema/dic/monolog/monolog-1.0.xsd">
+
+    <imports>
+        <import resource="monolog.xml"/>
+    </imports>
 
     <services>
         <defaults autowire="true" autoconfigure="true" public="false"/>
 
         <service id="Netzarbeiter\Shopware\PluginManagement\Command\HandleCommand">
             <argument type="service" key="$pluginRepository" id="plugin.repository"/>
+            <call method="setLogger">
+                <argument key="$logger" type="service" id="monolog.logger.ntzrbtr_shopware_plugin_management"/>
+            </call>
             <tag name="console.command"/>
         </service>
     </services>
