@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.3.1
+
+- Fix bug in validation of plugin name
+
 ## v1.3.0
 
 - Fix compatibility with Symfony Flex
