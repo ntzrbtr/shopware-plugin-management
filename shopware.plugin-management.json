@@ -1,20 +1,22 @@
 {
-    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "$id": "https://www.netzarbeiter.info/shopware.plugin-management.json",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "title": "Plugin list",
     "description": "List of Shopware plugins to be handled by ntzrbtr/shopware-plugin-management",
     "type": "object",
     "patternProperties": {
-        "^A-Z[a-zA-Z0-9]+$": {
+        "^[A-Z][a-zA-Z0-9]*$": {
             "type": "object",
             "properties": {
-                "status": {
-                    "enum": [ "installed", "active" ]
+                "active": {
+                    "type": "boolean"
                 },
                 "update": {
                     "enum": [ true, false, "force" ]
                 }
-            }
+            },
+            "additionalProperties": false
         }
-    }
+    },
+    "additionalProperties": false
 }
