@@ -311,28 +311,21 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
         // Load schema file.
         try {
-            $json = json_decode(file_get_contents($schemaFile), false, 512, JSON_THROW_ON_ERROR);
+            $schema = json_decode(file_get_contents($schemaFile), false, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $e) {
             $this->logger->error('Error parsing schema file', ['file' => $schemaFile, 'error' => $e->getMessage()]);
             $this->io->error(sprintf('Error parsing schema file "%s": %s', $schemaFile, $e->getMessage()));
             return false;
         }
 
-        // Set up schema.
-        try {
-            $schema = \Swaggest\JsonSchema\Schema::import($json);
-        } catch (\Exception $e) {
-            $this->logger->error('Error importing schema', ['file' => $schemaFile, 'error' => $e->getMessage()]);
-            $this->io->error(sprintf('Error importing schema: %s', $e->getMessage()));
-            return false;
-        }
-
         // Validate plugin list.
-        try {
-            $schema->in($pluginList);
-        } catch (\Swaggest\JsonSchema\InvalidValue $e) {
-            $this->logger->error('Error validating plugin list', ['error' => $e->getMessage()]);
-            $this->io->error(sprintf('Error validating plugin list: %s', $e->getMessage()));
+        $validator = new \JsonSchema\Validator();
+        $validator->validate($pluginList, $schema);
+        if (!$validator->isValid()) {
+            $errors = $validator->getErrors();
+            $this->logger->error('Error validating plugin list', ['errors' => $errors]);
+            $error = array_shift($errors);
+            $this->io->error(sprintf('Error validating plugin list: %s', $error['message']));
             return false;
         }
 
