@@ -4,6 +4,7 @@
 
 - Fix compatibility with Symfony Flex
 - Make compatible with Shopware 6.5
+- Fix bug in schema validation
 
 ## v1.2.0
 
