@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.3.0
+
+- Fix compatibility with Symfony Flex
+- Make compatible with Shopware 6.5
+
 ## v1.2.0
 
 - Switch to using Shopware bundle instead of Symfony bundle
