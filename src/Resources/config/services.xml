@@ -19,5 +19,10 @@
             </call>
             <tag name="console.command"/>
         </service>
+
+        <service id="Netzarbeiter\Shopware\PluginManagement\Service\PluginLifecycleService" public="true">
+            <argument type="service" key="$pluginRepo" id="plugin.repository"/>
+            <argument key="$shopwareVersion">%kernel.shopware_version%</argument>
+        </service>
     </services>
 </container>

@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.0
+
+- Fix handling of plugins after refresh of plugin list
+
 ## v1.3.1
 
 - Fix bug in validation of plugin name

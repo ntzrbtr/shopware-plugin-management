@@ -5,18 +5,19 @@ declare(strict_types=1);
 namespace Netzarbeiter\Shopware\PluginManagement\Command;
 
 use Composer\IO\NullIO;
+use Netzarbeiter\Shopware\PluginManagement\Service\PluginLifecycleService;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\NotFilter;
 use Shopware\Core\Framework\Plugin\PluginEntity;
-use Shopware\Core\Framework\Plugin\PluginLifecycleService;
 use Shopware\Core\Framework\Plugin\PluginService;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Install, activate, update, and remove plugins
@@ -50,15 +51,22 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     protected SymfonyStyle $io;
 
     /**
+     * Plugin lifecycle service
+     *
+     * @var PluginLifecycleService
+     */
+    protected PluginLifecycleService $pluginLifecycleService;
+
+    /**
      * PluginInstallCommand constructor.
      *
+     * @param ContainerInterface $container
      * @param PluginService $pluginService
-     * @param PluginLifecycleService $pluginLifecycleService
      * @param EntityRepository $pluginRepository
      */
     public function __construct(
+        protected ContainerInterface $container,
         protected PluginService $pluginService,
-        protected PluginLifecycleService $pluginLifecycleService,
         protected EntityRepository $pluginRepository
     ) {
         parent::__construct();
@@ -113,6 +121,10 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
             $this->io->section('Refreshing plugin list');
             $this->pluginService->refreshPlugins($this->context, new NullIO());
         }
+
+        // Fetch plugin lifecycle service;
+        // done now to have all the plugins in the list.
+        $this->pluginLifecycleService = $this->container->get(PluginLifecycleService::class);
 
         // Handle plugins and print output.
         $this->io->section('Handling active plugins');
@@ -305,7 +317,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         $schemaFile = realpath(__DIR__ . '/../../shopware.plugin-management.json');
         if (!$schemaFile || !is_file($schemaFile)) {
             $this->logger->error('Could not find schema file', ['file' => __DIR__ . '/../../shopware.plugin-management.json']);
-            $this->io->error(sprintf('Could not find schema file "%s"', __DIR__ . '/../../shopware.plugin-management.json'));
+            $this->io->error(sprintf('Could not find schema file "%s"',
+                __DIR__ . '/../../shopware.plugin-management.json'
+            ));
             return false;
         }
 
