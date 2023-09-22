@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.1
+
+- Fix bug in DI definition of command
+
 ## v1.4.0
 
 - Fix handling of plugins after refresh of plugin list

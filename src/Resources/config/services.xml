@@ -13,6 +13,7 @@
         <defaults autowire="true" autoconfigure="true" public="false"/>
 
         <service id="Netzarbeiter\Shopware\PluginManagement\Command\HandleCommand">
+            <argument type="service" key="$container" id="service_container"/>
             <argument type="service" key="$pluginRepository" id="plugin.repository"/>
             <call method="setLogger">
                 <argument key="$logger" type="service" id="monolog.logger.ntzrbtr_shopware_plugin_management"/>
