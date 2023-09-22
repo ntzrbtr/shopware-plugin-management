@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.4.2
+
+- Fix bug in DI definition of service
+
 ## v1.4.1
 
 - Fix bug in DI definition of command
