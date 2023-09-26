@@ -14,10 +14,6 @@ bin/console netzarbeiter:plugin:manage <file>
 
 ### Options
 
-#### `--refresh`
-
-Refresh the plugin list before installing plugins.
-
 #### `--dry-run`
 
 Do not install or uninstall plugins, just show what would be done.
@@ -49,8 +45,11 @@ command as a post-update script to your `composer.json` file:
 ```json
 {
   "scripts": {
+    "post-install-cmd": [
+        "[ ! -f vendor/autoload.php ] || [ ! -f plugins.json ] || ($PHP_BINARY bin/console plugin:refresh -s && $PHP_BINARY bin/console netzarbeiter:plugins:handle plugins.json)"
+    ],
     "post-update-cmd": [
-        "[ ! -f vendor/autoload.php ] || [ ! -f plugins.json ] || $PHP_BINARY bin/console netzarbeiter:plugins:handle --refresh plugins.json"
+        "[ ! -f vendor/autoload.php ] || [ ! -f plugins.json ] || ($PHP_BINARY bin/console plugin:refresh -s && $PHP_BINARY bin/console netzarbeiter:plugins:handle plugins.json)"
     ]
   }
 }

@@ -5,19 +5,18 @@ declare(strict_types=1);
 namespace Netzarbeiter\Shopware\PluginManagement\Command;
 
 use Composer\IO\NullIO;
-use Netzarbeiter\Shopware\PluginManagement\Service\PluginLifecycleService;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Criteria;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\EqualsFilter;
 use Shopware\Core\Framework\DataAbstractionLayer\Search\Filter\NotFilter;
 use Shopware\Core\Framework\Plugin\PluginEntity;
+use Shopware\Core\Framework\Plugin\PluginLifecycleService;
 use Shopware\Core\Framework\Plugin\PluginService;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Install, activate, update, and remove plugins
@@ -51,22 +50,15 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     protected SymfonyStyle $io;
 
     /**
-     * Plugin lifecycle service
-     *
-     * @var PluginLifecycleService
-     */
-    protected PluginLifecycleService $pluginLifecycleService;
-
-    /**
      * PluginInstallCommand constructor.
      *
-     * @param ContainerInterface $container
      * @param PluginService $pluginService
+     * @param PluginLifecycleService $pluginLifecycleService
      * @param EntityRepository $pluginRepository
      */
     public function __construct(
-        protected ContainerInterface $container,
         protected PluginService $pluginService,
+        protected PluginLifecycleService $pluginLifecycleService,
         protected EntityRepository $pluginRepository
     ) {
         parent::__construct();
@@ -85,7 +77,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     {
         $this
             ->addArgument('plugin-list', InputArgument::REQUIRED, 'Plugin list file')
-            ->addOption('refresh', null, null, 'Refresh plugin list before handling plugins')
+            ->addOption('refresh', null, null, 'Refresh plugin list (deprecated)')
             ->addOption('dry-run', null, null, 'Dry run, do not install or activate plugins');
     }
 
@@ -105,6 +97,13 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         // Print plugin title.
         $this->io->title(sprintf('%s (%s)', $this->getDescription(), $this->getName()));
 
+        // Refresh plugin list if requested.
+        if ($input->getOption('refresh')) {
+            $this->io->warning('Refresh of plugin list is removed as it does not work; call `bin/console plugin:refresh -s` manually instead');
+            $this->pluginService->refreshPlugins($this->context, new NullIO());
+        }
+
+
         // Read plugin list.
         $pluginList = $this->loadPluginList($input->getArgument('plugin-list'));
         if ($pluginList === null) {
@@ -115,16 +114,6 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         if (!$this->validatePluginList($pluginList)) {
             return self::FAILURE;
         }
-
-        // Refresh plugin list if requested.
-        if ($input->getOption('refresh')) {
-            $this->io->section('Refreshing plugin list');
-            $this->pluginService->refreshPlugins($this->context, new NullIO());
-        }
-
-        // Fetch plugin lifecycle service;
-        // done now to have all the plugins in the list.
-        $this->pluginLifecycleService = $this->container->get(PluginLifecycleService::class);
 
         // Handle plugins and print output.
         $this->io->section('Handling active plugins');

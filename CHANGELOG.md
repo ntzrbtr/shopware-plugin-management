@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.0
+
+- Remove '--refresh' option as that is not working
+
 ## v1.4.2
 
 - Fix bug in DI definition of service
