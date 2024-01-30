@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.1
+
+- Change license to MIT and add missing license file
+
 ## v1.5.0
 
 - Remove '--refresh' option as that is not working

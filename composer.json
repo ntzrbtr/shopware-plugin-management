@@ -7,7 +7,7 @@
         "shopware/core": "^6.4 || ^6.5",
         "justinrainbow/json-schema": "^5.2"
     },
-    "license": "GPL-3.0-or-later",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Netzarbeiter\\Shopware\\PluginManagement\\": "src/"
