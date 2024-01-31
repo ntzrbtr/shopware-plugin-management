@@ -50,6 +50,27 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     protected SymfonyStyle $io;
 
     /**
+     * Plugin service
+     *
+     * @var PluginService
+     */
+    protected PluginService $pluginService;
+
+    /**
+     * Plugin lifecycle service
+     *
+     * @var PluginLifecycleService
+     */
+    protected PluginLifecycleService $pluginLifecycleService;
+
+    /**
+     * Plugin repository
+     *
+     * @var EntityRepository
+     */
+    protected EntityRepository $pluginRepository;
+
+    /**
      * PluginInstallCommand constructor.
      *
      * @param PluginService $pluginService
@@ -57,11 +78,15 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
      * @param EntityRepository $pluginRepository
      */
     public function __construct(
-        protected PluginService $pluginService,
-        protected PluginLifecycleService $pluginLifecycleService,
-        protected EntityRepository $pluginRepository
+        PluginService $pluginService,
+        PluginLifecycleService $pluginLifecycleService,
+        EntityRepository $pluginRepository
     ) {
         parent::__construct();
+
+        $this->pluginRepository = $pluginRepository;
+        $this->pluginLifecycleService = $pluginLifecycleService;
+        $this->pluginService = $pluginService;
 
         // Create context.
         $this->context = Context::createDefaultContext();

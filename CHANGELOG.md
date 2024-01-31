@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.5.2
+
+- Fix compatibility issue with PHP 7.4
+
 ## v1.5.1
 
 - Change license to MIT and add missing license file
