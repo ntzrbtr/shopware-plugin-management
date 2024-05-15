@@ -21,19 +21,13 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Install, activate, update, and remove plugins
  */
+#[\Symfony\Component\Console\Attribute\AsCommand(
+    name: 'netzarbeiter:plugins:handle',
+    description: 'Install, activate, update, and remove plugins'
+)]
 class HandleCommand extends \Symfony\Component\Console\Command\Command implements \Psr\Log\LoggerAwareInterface
 {
     use \Psr\Log\LoggerAwareTrait;
-
-    /**
-     * @inerhitDoc
-     */
-    protected static $defaultName = 'netzarbeiter:plugins:handle';
-
-    /**
-     * @inerhitDoc
-     */
-    protected static $defaultDescription = 'Install, activate, update, and remove plugins';
 
     /**
      * Context
@@ -50,27 +44,6 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     protected SymfonyStyle $io;
 
     /**
-     * Plugin service
-     *
-     * @var PluginService
-     */
-    protected PluginService $pluginService;
-
-    /**
-     * Plugin lifecycle service
-     *
-     * @var PluginLifecycleService
-     */
-    protected PluginLifecycleService $pluginLifecycleService;
-
-    /**
-     * Plugin repository
-     *
-     * @var EntityRepository
-     */
-    protected EntityRepository $pluginRepository;
-
-    /**
      * PluginInstallCommand constructor.
      *
      * @param PluginService $pluginService
@@ -78,15 +51,11 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
      * @param EntityRepository $pluginRepository
      */
     public function __construct(
-        PluginService $pluginService,
-        PluginLifecycleService $pluginLifecycleService,
-        EntityRepository $pluginRepository
+        protected PluginService $pluginService,
+        protected PluginLifecycleService $pluginLifecycleService,
+        protected EntityRepository $pluginRepository
     ) {
         parent::__construct();
-
-        $this->pluginRepository = $pluginRepository;
-        $this->pluginLifecycleService = $pluginLifecycleService;
-        $this->pluginService = $pluginService;
 
         // Create context.
         $this->context = Context::createDefaultContext();
