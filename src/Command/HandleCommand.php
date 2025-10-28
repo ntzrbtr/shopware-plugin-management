@@ -4,6 +4,14 @@ declare(strict_types=1);
 
 namespace Netzarbeiter\Shopware\PluginManagement\Command;
 
+use Symfony\Component\Console\Attribute\AsCommand;
+use Symfony\Component\Console\Command\Command;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerAwareTrait;
+use Shopware\Core\Framework\DataAbstractionLayer\Indexing\EntityIndexerRegistry;
+use Symfony\Component\Console\Helper\Table;
+use Shopware\Core\Framework\Plugin\Exception\PluginNotFoundException;
+use JsonSchema\Validator;
 use Composer\IO\NullIO;
 use Shopware\Core\Framework\Context;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
@@ -21,38 +29,32 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * Install, activate, update, and remove plugins
  */
-#[\Symfony\Component\Console\Attribute\AsCommand(
+#[AsCommand(
     name: 'netzarbeiter:plugins:handle',
     description: 'Install, activate, update, and remove plugins'
 )]
-class HandleCommand extends \Symfony\Component\Console\Command\Command implements \Psr\Log\LoggerAwareInterface
+class HandleCommand extends Command implements LoggerAwareInterface
 {
-    use \Psr\Log\LoggerAwareTrait;
+    use LoggerAwareTrait;
 
     protected const string ARGUMENT_PLUGIN_LIST = 'plugin-list';
+
     protected const string OPTION_REFRESH = 'refresh';
+
     protected const string OPTION_DRY_RUN = 'dry-run';
 
     /**
      * Context
-     *
-     * @var Context
      */
     protected Context $context;
 
     /**
      * Style for input/output
-     *
-     * @var SymfonyStyle
      */
     protected SymfonyStyle $io;
 
     /**
      * PluginInstallCommand constructor.
-     *
-     * @param PluginService $pluginService
-     * @param PluginLifecycleService $pluginLifecycleService
-     * @param EntityRepository $pluginRepository
      */
     public function __construct(
         protected PluginService $pluginService,
@@ -64,7 +66,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         // Create context.
         $this->context = Context::createDefaultContext();
         $this->context->addState(
-            \Shopware\Core\Framework\DataAbstractionLayer\Indexing\EntityIndexerRegistry::DISABLE_INDEXING
+            EntityIndexerRegistry::DISABLE_INDEXING
         );
     }
 
@@ -90,7 +92,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     /**
      * @inheritDoc
      */
-    public function execute(InputInterface $input, OutputInterface $output): int
+    protected function execute(InputInterface $input, OutputInterface $output): int
     {
         // Print plugin title.
         $this->io->title(sprintf('%s (%s)', $this->getDescription(), $this->getName()));
@@ -101,10 +103,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
             $this->pluginService->refreshPlugins($this->context, new NullIO());
         }
 
-
         // Read plugin list.
         $pluginList = $this->loadPluginList($input->getArgument(self::ARGUMENT_PLUGIN_LIST));
-        if ($pluginList === null) {
+        if (!$pluginList instanceof \stdClass) {
             return self::FAILURE;
         }
 
@@ -115,7 +116,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
         // Handle plugins and print output.
         $this->io->section('Handling active plugins');
-        $table = new \Symfony\Component\Console\Helper\Table($output->section());
+        $table = new Table($output->section());
         $table->setHeaders(['Plugin', 'Active?', 'Update?', 'Actions']);
         $table->render();
         foreach ($pluginList as $plugin => $settings) {
@@ -124,16 +125,17 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
                 $plugin,
                 $settings->active ? 'yes' : 'no',
                 is_bool($settings->update) ? ($settings->update ? 'yes' : 'no') : $settings->update,
-                empty($actions) ? '-' : implode('|', $actions),
+                $actions === [] ? '-' : implode('|', $actions),
             ]);
         }
+
         $this->io->writeln('');
 
         // Uninstall all plugins not in the list.
         $pluginsToUninstall = $this->getPluginsToUninstall($pluginList);
-        if (count($pluginsToUninstall) > 0) {
+        if ($pluginsToUninstall !== []) {
             $this->io->section('Uninstalling remaining plugins');
-            $table = new \Symfony\Component\Console\Helper\Table($output->section());
+            $table = new Table($output->section());
             $table->setHeaders(['Plugin', 'Uninstalled?']);
             $table->render();
             foreach ($pluginsToUninstall as $plugin) {
@@ -142,6 +144,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
                     $this->uninstallPlugin($plugin, (bool)$input->getOption(self::OPTION_DRY_RUN)) ? 'yes' : 'no',
                 ]);
             }
+
             $this->io->writeln('');
         }
 
@@ -150,19 +153,14 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
     /**
      * Handle a plugin action.
-     *
-     * @param string $pluginName
-     * @param \stdClass $settings
-     * @param bool $dryRun
-     * @return array
      */
     protected function handlePlugin(string $pluginName, \stdClass $settings, bool $dryRun = false): array
     {
         // Fetch plugin.
         try {
             $plugin = $this->pluginService->getPluginByName($pluginName, $this->context);
-        } catch (\Shopware\Core\Framework\Plugin\Exception\PluginNotFoundException $e) {
-            $this->logger->error('Plugin missing', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
+        } catch (PluginNotFoundException $pluginNotFoundException) {
+            $this->logger->error('Plugin missing', ['plugin' => $pluginName, 'error' => $pluginNotFoundException->getMessage()]);
             return ['Plugin missing'];
         }
 
@@ -170,9 +168,11 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         $actions = [];
 
         // Install plugin if it isn't.
-        if (!$plugin->getInstalledAt()) {
+        if (!$plugin->getInstalledAt() instanceof \DateTimeInterface) {
             try {
-                $dryRun || $this->pluginLifecycleService->installPlugin($plugin, $this->context);
+                if (!$dryRun) {
+                    $this->pluginLifecycleService->installPlugin($plugin, $this->context);
+                }
                 $actions[] = 'Installed';
             } catch (\Exception $e) {
                 $this->logger->error('Installation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
@@ -183,7 +183,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         // Activate/deactivate plugin as specified
         if ($settings->active && !$plugin->getActive()) {
             try {
-                $dryRun || $this->pluginLifecycleService->activatePlugin($plugin, $this->context);
+                if (!$dryRun) {
+                    $this->pluginLifecycleService->activatePlugin($plugin, $this->context);
+                }
                 $actions[] = 'Activated';
             } catch (\Exception $e) {
                 $this->logger->error('Activation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
@@ -191,7 +193,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
             }
         } elseif (!$settings->active && $plugin->getActive()) {
             try {
-                $dryRun || $this->pluginLifecycleService->deactivatePlugin($plugin, $this->context);
+                if (!$dryRun) {
+                    $this->pluginLifecycleService->deactivatePlugin($plugin, $this->context);
+                }
                 $actions[] = 'Deactivated';
             } catch (\Exception $e) {
                 $this->logger->error('Deactivation failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
@@ -202,7 +206,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         // Update plugin if either we have a new version and update flag is set or if update is forced.
         if ($settings->update === 'force' || ($settings->update && $plugin->getUpgradeVersion())) {
             try {
-                $dryRun || $this->pluginLifecycleService->updatePlugin($plugin, $this->context);
+                if (!$dryRun) {
+                    $this->pluginLifecycleService->updatePlugin($plugin, $this->context);
+                }
                 $actions[] = 'Updated';
             } catch (\Exception $e) {
                 $this->logger->error('Update failed', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
@@ -215,9 +221,6 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
     /**
      * Get list of all plugins to uninstall.
-     *
-     * @param \stdClass $pluginList
-     * @return array
      */
     protected function getPluginsToUninstall(\stdClass $pluginList): array
     {
@@ -232,7 +235,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
         // Get names of plugins.
         $pluginNames = $plugins->map(
-            static function (PluginEntity $plugin) {
+            static function (PluginEntity $plugin): string {
                 return $plugin->getName();
             }
         );
@@ -242,7 +245,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
         return $plugins
             ->filter(
-                static function (PluginEntity $plugin) use ($pluginNamesToUninstall) {
+                static function (PluginEntity $plugin) use ($pluginNamesToUninstall): bool {
                     return in_array($plugin->getName(), $pluginNamesToUninstall, true);
                 }
             )
@@ -251,26 +254,21 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
     /**
      * Uninstall plugin.
-     *
-     * @param PluginEntity $plugin
-     * @param bool $dryRun
-     * @return bool
      */
     protected function uninstallPlugin(PluginEntity $plugin, bool $dryRun = false): bool
     {
         try {
-            $dryRun || $this->pluginLifecycleService->uninstallPlugin($plugin, $this->context);
+            if (!$dryRun) {
+                $this->pluginLifecycleService->uninstallPlugin($plugin, $this->context);
+            }
             return true;
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             return false;
         }
     }
 
     /**
      * Load plugin list from file.
-     *
-     * @param string $pluginFile
-     * @return \stdClass|null
      */
     protected function loadPluginList(string $pluginFile): ?\stdClass
     {
@@ -283,9 +281,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
         try {
             $pluginList = json_decode(file_get_contents($pluginFile), false, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
-            $this->logger->error('Error parsing plugin list file', ['file' => $pluginFile, 'error' => $e->getMessage()]);
-            $this->io->error(sprintf('Error parsing plugin list file "%s": %s', $pluginFile, $e->getMessage()));
+        } catch (\JsonException $jsonException) {
+            $this->logger->error('Error parsing plugin list file', ['file' => $pluginFile, 'error' => $jsonException->getMessage()]);
+            $this->io->error(sprintf('Error parsing plugin list file "%s": %s', $pluginFile, $jsonException->getMessage()));
             return null;
         }
 
@@ -294,9 +292,6 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 
     /**
      * Validate plugin list using JSON schema.
-     *
-     * @param \stdClass $pluginList
-     * @return bool
      */
     protected function validatePluginList(\stdClass $pluginList): bool
     {
@@ -313,14 +308,14 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         // Load schema file.
         try {
             $schema = json_decode(file_get_contents($schemaFile), false, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException $e) {
-            $this->logger->error('Error parsing schema file', ['file' => $schemaFile, 'error' => $e->getMessage()]);
-            $this->io->error(sprintf('Error parsing schema file "%s": %s', $schemaFile, $e->getMessage()));
+        } catch (\JsonException $jsonException) {
+            $this->logger->error('Error parsing schema file', ['file' => $schemaFile, 'error' => $jsonException->getMessage()]);
+            $this->io->error(sprintf('Error parsing schema file "%s": %s', $schemaFile, $jsonException->getMessage()));
             return false;
         }
 
         // Validate plugin list.
-        $validator = new \JsonSchema\Validator();
+        $validator = new Validator();
         $validator->validate($pluginList, $schema);
         if (!$validator->isValid()) {
             $errors = $validator->getErrors();

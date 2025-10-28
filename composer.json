@@ -23,5 +23,9 @@
         "allow-plugins": {
             "symfony/runtime": true
         }
+    },
+    "require-dev": {
+        "rector/rector": "^2.2",
+        "frosh/shopware-rector": "^0.5.7"
     }
 }

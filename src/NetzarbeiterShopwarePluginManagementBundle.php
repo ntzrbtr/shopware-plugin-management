@@ -4,12 +4,19 @@ declare(strict_types=1);
 
 namespace Netzarbeiter\Shopware\PluginManagement;
 
+use Symfony\Component\HttpKernel\Bundle\Bundle;
+use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Loader\LoaderResolver;
+use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\YamlFileLoader;
+use Symfony\Component\DependencyInjection\Loader\PhpFileLoader;
+use Symfony\Component\Config\Loader\DelegatingLoader;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * Bundle class
  */
-class NetzarbeiterShopwarePluginManagementBundle extends \Symfony\Component\HttpKernel\Bundle\Bundle
+class NetzarbeiterShopwarePluginManagementBundle extends Bundle
 {
     /**
      * @inheritDoc
@@ -28,13 +35,13 @@ class NetzarbeiterShopwarePluginManagementBundle extends \Symfony\Component\Http
      */
     protected function registerContainerFile(ContainerBuilder $container): void
     {
-        $fileLocator = new \Symfony\Component\Config\FileLocator($this->getPath());
-        $loaderResolver = new \Symfony\Component\Config\Loader\LoaderResolver([
-            new \Symfony\Component\DependencyInjection\Loader\XmlFileLoader($container, $fileLocator),
-            new \Symfony\Component\DependencyInjection\Loader\YamlFileLoader($container, $fileLocator),
-            new \Symfony\Component\DependencyInjection\Loader\PhpFileLoader($container, $fileLocator),
+        $fileLocator = new FileLocator($this->getPath());
+        $loaderResolver = new LoaderResolver([
+            new XmlFileLoader($container, $fileLocator),
+            new YamlFileLoader($container, $fileLocator),
+            new PhpFileLoader($container, $fileLocator),
         ]);
-        $delegatingLoader = new \Symfony\Component\Config\Loader\DelegatingLoader($loaderResolver);
+        $delegatingLoader = new DelegatingLoader($loaderResolver);
 
         foreach ($this->getServicesFilePathArray($this->getPath() . '/Resources/config/services.*') as $path) {
             $delegatingLoader->load($path);
@@ -52,7 +59,6 @@ class NetzarbeiterShopwarePluginManagementBundle extends \Symfony\Component\Http
      *
      * @see \Shopware\Core\Framework\Bundle::getServicesFilePathArray()
      *
-     * @param string $path
      * @return string[]
      */
     protected function getServicesFilePathArray(string $path): array
