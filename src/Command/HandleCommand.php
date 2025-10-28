@@ -43,6 +43,8 @@ class HandleCommand extends Command implements LoggerAwareInterface
 
     protected const string OPTION_DRY_RUN = 'dry-run';
 
+    protected const string OPTION_KEEP_OTHERS = 'keep-others';
+
     /**
      * Context
      */
@@ -78,7 +80,8 @@ class HandleCommand extends Command implements LoggerAwareInterface
         $this
             ->addArgument(self::ARGUMENT_PLUGIN_LIST, InputArgument::REQUIRED, 'Plugin list file')
             ->addOption(self::OPTION_REFRESH, null, null, 'Refresh plugin list (deprecated)')
-            ->addOption(self::OPTION_DRY_RUN, null, null, 'Dry run, do not install or activate plugins');
+            ->addOption(self::OPTION_DRY_RUN, null, null, 'Dry run, do not install or activate plugins')
+            ->addOption(self::OPTION_KEEP_OTHERS, null, null, 'Keep other plugins which are not in the list file');
     }
 
     /**
@@ -99,7 +102,9 @@ class HandleCommand extends Command implements LoggerAwareInterface
 
         // Refresh plugin list if requested.
         if ($input->getOption(self::OPTION_REFRESH)) {
-            $this->io->warning('Refresh of plugin list is removed as it does not work; call `bin/console plugin:refresh -s` manually instead');
+            $this->io->warning(
+                'Refresh of plugin list is removed as it does not work; call `bin/console plugin:refresh -s` manually instead'
+            );
             $this->pluginService->refreshPlugins($this->context, new NullIO());
         }
 
@@ -129,23 +134,38 @@ class HandleCommand extends Command implements LoggerAwareInterface
             ]);
         }
 
+        // Make sure table is cleanly rendered.
         $this->io->writeln('');
 
         // Uninstall all plugins not in the list.
         $pluginsToUninstall = $this->getPluginsToUninstall($pluginList);
         if ($pluginsToUninstall !== []) {
             $this->io->section('Uninstalling remaining plugins');
-            $table = new Table($output->section());
-            $table->setHeaders(['Plugin', 'Uninstalled?']);
-            $table->render();
-            foreach ($pluginsToUninstall as $plugin) {
-                $table->appendRow([
-                    $plugin->getName(),
-                    $this->uninstallPlugin($plugin, (bool)$input->getOption(self::OPTION_DRY_RUN)) ? 'yes' : 'no',
-                ]);
-            }
 
-            $this->io->writeln('');
+            if ($input->getOption(self::OPTION_KEEP_OTHERS)) {
+                $this->io->warning(
+                    'Keeping other plugins which are not in the list file: ' . implode(
+                        ', ',
+                        array_map(
+                            static fn(PluginEntity $plugin): string => $plugin->getName(),
+                            $pluginsToUninstall
+                        )
+                    )
+                );
+            } else {
+                $table = new Table($output->section());
+                $table->setHeaders(['Plugin', 'Uninstalled?']);
+                $table->render();
+                foreach ($pluginsToUninstall as $plugin) {
+                    $table->appendRow([
+                        $plugin->getName(),
+                        $this->uninstallPlugin($plugin, (bool)$input->getOption(self::OPTION_DRY_RUN)) ? 'yes' : 'no',
+                    ]);
+                }
+
+                // Make sure table is cleanly rendered.
+                $this->io->writeln('');
+            }
         }
 
         return self::SUCCESS;
@@ -160,7 +180,10 @@ class HandleCommand extends Command implements LoggerAwareInterface
         try {
             $plugin = $this->pluginService->getPluginByName($pluginName, $this->context);
         } catch (PluginNotFoundException $pluginNotFoundException) {
-            $this->logger->error('Plugin missing', ['plugin' => $pluginName, 'error' => $pluginNotFoundException->getMessage()]);
+            $this->logger->error(
+                'Plugin missing',
+                ['plugin' => $pluginName, 'error' => $pluginNotFoundException->getMessage()]
+            );
             return ['Plugin missing'];
         }
 
@@ -282,8 +305,13 @@ class HandleCommand extends Command implements LoggerAwareInterface
         try {
             $pluginList = json_decode(file_get_contents($pluginFile), false, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $jsonException) {
-            $this->logger->error('Error parsing plugin list file', ['file' => $pluginFile, 'error' => $jsonException->getMessage()]);
-            $this->io->error(sprintf('Error parsing plugin list file "%s": %s', $pluginFile, $jsonException->getMessage()));
+            $this->logger->error(
+                'Error parsing plugin list file',
+                ['file' => $pluginFile, 'error' => $jsonException->getMessage()]
+            );
+            $this->io->error(
+                sprintf('Error parsing plugin list file "%s": %s', $pluginFile, $jsonException->getMessage())
+            );
             return null;
         }
 
@@ -298,10 +326,16 @@ class HandleCommand extends Command implements LoggerAwareInterface
         // Check path for schema file.
         $schemaFile = realpath(__DIR__ . '/../../shopware.plugin-management.json');
         if (!$schemaFile || !is_file($schemaFile)) {
-            $this->logger->error('Could not find schema file', ['file' => __DIR__ . '/../../shopware.plugin-management.json']);
-            $this->io->error(sprintf('Could not find schema file "%s"',
-                __DIR__ . '/../../shopware.plugin-management.json'
-            ));
+            $this->logger->error(
+                'Could not find schema file',
+                ['file' => __DIR__ . '/../../shopware.plugin-management.json']
+            );
+            $this->io->error(
+                sprintf(
+                    'Could not find schema file "%s"',
+                    __DIR__ . '/../../shopware.plugin-management.json'
+                )
+            );
             return false;
         }
 
@@ -309,7 +343,10 @@ class HandleCommand extends Command implements LoggerAwareInterface
         try {
             $schema = json_decode(file_get_contents($schemaFile), false, 512, JSON_THROW_ON_ERROR);
         } catch (\JsonException $jsonException) {
-            $this->logger->error('Error parsing schema file', ['file' => $schemaFile, 'error' => $jsonException->getMessage()]);
+            $this->logger->error(
+                'Error parsing schema file',
+                ['file' => $schemaFile, 'error' => $jsonException->getMessage()]
+            );
             $this->io->error(sprintf('Error parsing schema file "%s": %s', $schemaFile, $jsonException->getMessage()));
             return false;
         }
