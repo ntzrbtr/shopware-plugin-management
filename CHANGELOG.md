@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.6.0
+
+- Make compatible with Shopware 6.6
+
 ## v1.5.3
 
 - Add compatibility with PHP 8.0
