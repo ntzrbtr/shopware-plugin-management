@@ -69,7 +69,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     }
 
     /**
-     * @inerhitDoc
+     * @inheritDoc
      */
     protected function configure(): void
     {
@@ -80,7 +80,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     }
 
     /**
-     * @inerhitDoc
+     * @inheritDoc
      */
     protected function initialize(InputInterface $input, OutputInterface $output): void
     {
@@ -88,7 +88,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     }
 
     /**
-     * @inerhitDoc
+     * @inheritDoc
      */
     public function execute(InputInterface $input, OutputInterface $output): int
     {
