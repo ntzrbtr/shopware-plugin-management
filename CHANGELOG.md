@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.7.0
+
+- Make compatible with Shopware 6.7
+- Improve code quality using Rector
+- Add option to keep plugins not in the list file (e.g. for testing new plugins from the Shopware store)
+
 ## v1.6.0
 
 - Make compatible with Shopware 6.6

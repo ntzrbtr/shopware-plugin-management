@@ -1,31 +1,31 @@
 {
-    "name": "ntzrbtr/shopware-plugin-management",
-    "description": "Tools for plugin management in Shopware 6",
-    "type": "symfony-bundle",
-    "require": {
-        "php": "^8.2",
-        "shopware/core": "^6.6",
-        "justinrainbow/json-schema": "^6.6"
-    },
-    "license": "MIT",
-    "autoload": {
-        "psr-4": {
-            "Netzarbeiter\\Shopware\\PluginManagement\\": "src/"
-        }
-    },
-    "authors": [
-        {
-            "name": "Thomas Off",
-            "email": "thomas.off@netzarbeiter.info"
-        }
-    ],
-    "config": {
-        "allow-plugins": {
-            "symfony/runtime": true
-        }
-    },
-    "require-dev": {
-        "rector/rector": "^2.2",
-        "frosh/shopware-rector": "^0.5.7"
+  "name": "ntzrbtr/shopware-plugin-management",
+  "description": "Tools for plugin management in Shopware 6",
+  "type": "symfony-bundle",
+  "require": {
+    "php": "^8.2",
+    "shopware/core": "^6.6",
+    "justinrainbow/json-schema": "^6.6"
+  },
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Netzarbeiter\\Shopware\\PluginManagement\\": "src/"
     }
+  },
+  "authors": [
+    {
+      "name": "Thomas Off",
+      "email": "thomas.off@netzarbeiter.info"
+    }
+  ],
+  "config": {
+    "allow-plugins": {
+      "symfony/runtime": true
+    }
+  },
+  "require-dev": {
+    "rector/rector": "^2.2",
+    "frosh/shopware-rector": "^0.5.7"
+  }
 }
