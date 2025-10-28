@@ -3,7 +3,7 @@
     "description": "Tools for plugin management in Shopware 6",
     "type": "symfony-bundle",
     "require": {
-        "php": "^8.2 || ^8.3",
+        "php": "^8.2",
         "shopware/core": "^6.6",
         "justinrainbow/json-schema": "^5.2"
     },
