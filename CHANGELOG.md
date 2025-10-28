@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.7.1
+
+- Fix documentation
+
 ## v1.7.0
 
 - Make compatible with Shopware 6.7

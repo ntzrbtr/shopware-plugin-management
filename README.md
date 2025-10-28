@@ -14,6 +14,14 @@ bin/console netzarbeiter:plugin:manage <file>
 
 ### Options
 
+#### `--refresh`
+
+Refresh plugin list before doing anything.
+
+#### `--keep-others`
+
+Keep plugins which are not in  the list installed; this is helpful when testing new plugins from the Shopware store.
+
 #### `--dry-run`
 
 Do not install or uninstall plugins, just show what would be done.
