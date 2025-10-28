@@ -29,6 +29,10 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
 {
     use \Psr\Log\LoggerAwareTrait;
 
+    protected const string ARGUMENT_PLUGIN_LIST = 'plugin-list';
+    protected const string OPTION_REFRESH = 'refresh';
+    protected const string OPTION_DRY_RUN = 'dry-run';
+
     /**
      * Context
      *
@@ -70,9 +74,9 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
     protected function configure(): void
     {
         $this
-            ->addArgument('plugin-list', InputArgument::REQUIRED, 'Plugin list file')
-            ->addOption('refresh', null, null, 'Refresh plugin list (deprecated)')
-            ->addOption('dry-run', null, null, 'Dry run, do not install or activate plugins');
+            ->addArgument(self::ARGUMENT_PLUGIN_LIST, InputArgument::REQUIRED, 'Plugin list file')
+            ->addOption(self::OPTION_REFRESH, null, null, 'Refresh plugin list (deprecated)')
+            ->addOption(self::OPTION_DRY_RUN, null, null, 'Dry run, do not install or activate plugins');
     }
 
     /**
@@ -92,14 +96,14 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         $this->io->title(sprintf('%s (%s)', $this->getDescription(), $this->getName()));
 
         // Refresh plugin list if requested.
-        if ($input->getOption('refresh')) {
+        if ($input->getOption(self::OPTION_REFRESH)) {
             $this->io->warning('Refresh of plugin list is removed as it does not work; call `bin/console plugin:refresh -s` manually instead');
             $this->pluginService->refreshPlugins($this->context, new NullIO());
         }
 
 
         // Read plugin list.
-        $pluginList = $this->loadPluginList($input->getArgument('plugin-list'));
+        $pluginList = $this->loadPluginList($input->getArgument(self::ARGUMENT_PLUGIN_LIST));
         if ($pluginList === null) {
             return self::FAILURE;
         }
@@ -115,7 +119,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
         $table->setHeaders(['Plugin', 'Active?', 'Update?', 'Actions']);
         $table->render();
         foreach ($pluginList as $plugin => $settings) {
-            $actions = $this->handlePlugin($plugin, $settings, (bool)$input->getOption('dry-run'));
+            $actions = $this->handlePlugin($plugin, $settings, (bool)$input->getOption(self::OPTION_DRY_RUN));
             $table->appendRow([
                 $plugin,
                 $settings->active ? 'yes' : 'no',
@@ -135,7 +139,7 @@ class HandleCommand extends \Symfony\Component\Console\Command\Command implement
             foreach ($pluginsToUninstall as $plugin) {
                 $table->appendRow([
                     $plugin->getName(),
-                    $this->uninstallPlugin($plugin, (bool)$input->getOption('dry-run')) ? 'yes' : 'no',
+                    $this->uninstallPlugin($plugin, (bool)$input->getOption(self::OPTION_DRY_RUN)) ? 'yes' : 'no',
                 ]);
             }
             $this->io->writeln('');
