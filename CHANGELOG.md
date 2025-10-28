@@ -1,63 +1,98 @@
 # Changelog
 
-## v1.7.1
+## [1.7.1]
+
+### Fixed
 
 - Fix documentation
+- Reworked changelog to adhere to https://keepachangelog.com/en/1.0.0/
 
-## v1.7.0
+## [1.7.0]
+
+### Added
 
 - Make compatible with Shopware 6.7
 - Improve code quality using Rector
 - Add option to keep plugins not in the list file (e.g. for testing new plugins from the Shopware store)
 
-## v1.6.0
+## [1.6.0]
+
+### Added
 
 - Make compatible with Shopware 6.6
 
-## v1.5.3
+## [1.5.3]
+
+### Fixed
 
 - Add compatibility with PHP 8.0
 
-## v1.5.2
+## [1.5.2]
+
+### Fixed
 
 - Fix compatibility issue with PHP 7.4
 
-## v1.5.1
+## [1.5.1]
+
+### Fixed
 
 - Change license to MIT and add missing license file
 
-## v1.5.0
+## [1.5.0]
+
+### Fixed
 
 - Remove '--refresh' option as that is not working
 
-## v1.4.2
+## [1.4.2]
+
+### Fixed
 
 - Fix bug in DI definition of service
 
-## v1.4.1
+## [1.4.1]
+
+### Fixed
 
 - Fix bug in DI definition of command
 
-## v1.4.0
+## [1.4.0]
+
+### Fixed
 
 - Fix handling of plugins after refresh of plugin list
 
-## v1.3.1
+## [1.3.1]
+
+### Fixed
 
 - Fix bug in validation of plugin name
 
-## v1.3.0
+## [1.3.0]
+
+### Added
+
+- Make compatible with Shopware 6.5
+
+### Fixed
 
 - Fix compatibility with Symfony Flex
-- Make compatible with Shopware 6.5
 - Fix bug in schema validation
 
-## v1.2.0
+## [1.2.0]
+
+### Changed
 
 - Switch to using Shopware bundle instead of Symfony bundle
+
+### Added
+
 - Add logging
 
-## v1.1.0
+## [1.1.0]
+
+### Added
 
 - Add changelog.
 - Add better example for use in composer.json.
@@ -65,10 +100,14 @@
 - Add options documentation.
 - Add ability to refresh the plugin list at start.
 
-## v1.0.1
+## [1.0.1]
+
+### Added
 
 - Add note on automation.
 
-## v1.0.0
+## [1.0.0]
+
+### Added
 
 - Inital release.
